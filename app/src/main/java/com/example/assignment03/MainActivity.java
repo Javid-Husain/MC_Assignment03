@@ -1,4 +1,4 @@
-package com.example.assignment03;
+package com.example.assignment03;// MainActivity.java
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,24 +14,33 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class MainActivity extends Activity implements SensorEventListener {
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
     private TextView textViewPitch, textViewRoll, textViewYaw;
     private Button startButton, stopButton, historyButton;
-    private DatabaseHelper dbHelper;
+    private StringBuilder dataStringBuilder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        dbHelper = new DatabaseHelper(this);
-
         textViewPitch = findViewById(R.id.text_view_pitch);
         textViewRoll = findViewById(R.id.text_view_roll);
         textViewYaw = findViewById(R.id.text_view_yaw);
+
+        File directory = getExternalFilesDir(null);
+        String path = directory.getAbsolutePath();
+
 
         // Set initial values to zero
         textViewPitch.setText("Pitch: 0.0");
@@ -51,6 +60,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             @Override
             public void onClick(View v) {
                 startSensor();
+                dataStringBuilder = new StringBuilder();
             }
         });
 
@@ -58,6 +68,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             @Override
             public void onClick(View v) {
                 stopSensor();
+                saveDataToFile();
                 // Reset values to zero when stop button is clicked
                 textViewPitch.setText("Pitch: 0.0");
                 textViewRoll.setText("Roll: 0.0");
@@ -130,5 +141,23 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected void onResume() {
         super.onResume();
         startSensor();
+    }
+
+    private void saveDataToFile() {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String fileName = "orientation_data_" + sdf.format(new Date()) + ".txt";
+            File directory = getExternalFilesDir(null);
+            File file = new File(directory, fileName);
+            FileOutputStream fos = new FileOutputStream(file);
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            osw.write(dataStringBuilder.toString());
+            osw.flush();
+            osw.close();
+            Toast.makeText(this, "Data saved to file: " + fileName, Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error saving data to file!", Toast.LENGTH_SHORT).show();
+        }
     }
 }
