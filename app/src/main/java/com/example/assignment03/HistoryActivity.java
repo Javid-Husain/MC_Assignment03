@@ -58,7 +58,7 @@ public class HistoryActivity extends Activity {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
 
         // Plot pitch graph
         LineDataSet pitchDataSet = new LineDataSet(pitchEntries, "Pitch");
