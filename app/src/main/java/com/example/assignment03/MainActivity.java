@@ -8,9 +8,11 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity implements SensorEventListener {
 
@@ -18,15 +20,23 @@ public class MainActivity extends Activity implements SensorEventListener {
     private Sensor accelerometer;
     private TextView textViewPitch, textViewRoll, textViewYaw;
     private Button startButton, stopButton, historyButton;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        dbHelper = new DatabaseHelper(this);
+
         textViewPitch = findViewById(R.id.text_view_pitch);
         textViewRoll = findViewById(R.id.text_view_roll);
         textViewYaw = findViewById(R.id.text_view_yaw);
+
+        // Set initial values to zero
+        textViewPitch.setText("Pitch: 0.0");
+        textViewRoll.setText("Roll: 0.0");
+        textViewYaw.setText("Yaw: 0.0");
 
         startButton = findViewById(R.id.start_button);
         stopButton = findViewById(R.id.stop_button);
@@ -48,6 +58,10 @@ public class MainActivity extends Activity implements SensorEventListener {
             @Override
             public void onClick(View v) {
                 stopSensor();
+                // Reset values to zero when stop button is clicked
+                textViewPitch.setText("Pitch: 0.0");
+                textViewRoll.setText("Roll: 0.0");
+                textViewYaw.setText("Yaw: 0.0");
             }
         });
 
@@ -75,18 +89,31 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             float[] orientationValues = new float[3];
             float[] rotationMatrix = new float[9];
-            SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
-            SensorManager.getOrientation(rotationMatrix, orientationValues);
+            try {
+                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
+                SensorManager.getOrientation(rotationMatrix, orientationValues);
 
-            float pitch = orientationValues[1];
-            float roll = orientationValues[2];
-            float yaw = orientationValues[0];
+                float pitch = orientationValues[1];
+                float roll = orientationValues[2];
+                float yaw = orientationValues[0];
 
-            textViewPitch.setText("Pitch: " + Math.toDegrees(pitch));
-            textViewRoll.setText("Roll: " + Math.toDegrees(roll));
-            textViewYaw.setText("Yaw: " + Math.toDegrees(yaw));
+                // Check for NaN values
+                if (!Float.isNaN(pitch) && !Float.isNaN(roll) && !Float.isNaN(yaw)) {
+                    textViewPitch.setText("Pitch: " + Math.toDegrees(pitch));
+                    textViewRoll.setText("Roll: " + Math.toDegrees(roll));
+                    textViewYaw.setText("Yaw: " + Math.toDegrees(yaw));
+                } else {
+                    // Handle NaN values
+                    Log.e("Sensor", "NaN values detected");
+                }
+            } catch (Exception e) {
+                // Handle any exceptions
+                Log.e("Sensor", "Error processing sensor data: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
+
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {

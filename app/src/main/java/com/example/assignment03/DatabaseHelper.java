@@ -1,7 +1,6 @@
 package com.example.assignment03;
 
-// DatabaseHelper.java
-
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -40,5 +39,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ORIENTATION);
         onCreate(db);
+    }
+
+    // Method to insert orientation data into the database
+    public long insertOrientationData(long timestamp, float pitch, float roll, float yaw) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_TIMESTAMP, timestamp);
+        values.put(COLUMN_PITCH, pitch);
+        values.put(COLUMN_ROLL, roll);
+        values.put(COLUMN_YAW, yaw);
+
+        // Insert the values into the database
+        long newRowId = db.insert(TABLE_ORIENTATION, null, values);
+
+        // Close the database connection
+        db.close();
+
+        return newRowId; // Return the row ID of the newly inserted row
     }
 }
